@@ -165,7 +165,11 @@ class FfmpegStore {
 class MainStore {
   file: File | undefined = undefined;
   fileLoading = false;
-  transform: VideoTransform = {};
+  transform: VideoTransform = {
+    outputFormat: 'mp4',
+    webpFrameRate: 12,
+    webpQuality: 80,
+  };
 
   ffmpeg = new FfmpegStore();
 

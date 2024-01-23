@@ -11,6 +11,7 @@ import { Slider } from '../components/Slider';
 export const Render: React.FC = observer(() => {
   const [outputUrl, setOutputUrl] = useState<string>();
   const [logVisible, setLogVisible] = useState(false);
+  const [urlFormat, setUrlFormat] = useState<string>('mp4');
 
   const { ffmpeg, video } = mainStore;
 
@@ -46,6 +47,7 @@ export const Render: React.FC = observer(() => {
     const filters: string[] = [];
 
     const { flipH, flipV, area, time, mute } = mainStore.transform;
+    const { outputFormat, webpFrameRate, webpQuality } = mainStore.transform;
 
     if (flipH) {
       filters.push('hflip');
@@ -87,8 +89,16 @@ export const Render: React.FC = observer(() => {
       }
     }
 
-    args.push('-c:v', 'libx264');
-    args.push('-preset', 'veryfast');
+    if (outputFormat === 'webp') {
+      args.push('-vcodec', 'libwebp');
+      args.push('-lossless', '0');
+      args.push('-q:v', webpQuality?.toString() ?? '80');
+      args.push('-r', webpFrameRate?.toString() ?? '12');
+      args.push('-loop', '0');
+    } else {
+      args.push('-c:v', 'libx264');
+      args.push('-preset', 'veryfast');
+    }
 
     if (mute) {
       args.push('-an');
@@ -96,8 +106,14 @@ export const Render: React.FC = observer(() => {
       args.push('-c:a', 'copy');
     }
 
+    args.push('-f', outputFormat || 'mp4');
+
+    console.log(args);
+
     const newFile = await ffmpeg.exec(mainStore.file!, args);
     setOutputUrl(URL.createObjectURL(newFile));
+    // 设置urlFormat
+    setUrlFormat(outputFormat || 'mp4');
   };
 
   return (
@@ -135,14 +151,79 @@ export const Render: React.FC = observer(() => {
               />
             </div>
           </div>
+          <div style={{ marginTop: '0.25rem', marginBottom: '0.25rem' }}>
+            <div className="select">
+              <select
+                value={mainStore.transform.outputFormat}
+                onChange={e => {
+                  mainStore.transform = {
+                    ...mainStore.transform,
+                    outputFormat: e.target.value,
+                  };
+                }}
+              >
+                <option value="mp4">mp4</option>
+                <option value="webp">webp</option>
+              </select>
+            </div>
+            {mainStore.transform.outputFormat === 'webp' && (
+              <>
+                {/* 帧率 */}
+                <div className="select">
+                  <select
+                    value={
+                      mainStore.transform.webpFrameRate?.toString() ?? '12'
+                    }
+                    onChange={e => {
+                      mainStore.transform = {
+                        ...mainStore.transform,
+                        webpFrameRate: Number(e.target.value),
+                      };
+                    }}
+                  >
+                    <option value="1">1 fps</option>
+                    <option value="6">6 fps</option>
+                    <option value="12">12 fps</option>
+                    <option value="24">24 fps</option>
+                    <option value="30">30 fps</option>
+                  </select>
+                </div>
+                {/* 质量 */}
+                <div className="select">
+                  <select
+                    value={mainStore.transform.webpQuality?.toString() ?? '80'}
+                    onChange={e => {
+                      mainStore.transform = {
+                        ...mainStore.transform,
+                        webpQuality: Number(e.target.value),
+                      };
+                    }}
+                  >
+                    <option value="10">10 Quality</option>
+                    <option value="20">20 Quality</option>
+                    <option value="30">30 Quality</option>
+                    <option value="40">40 Quality</option>
+                    <option value="50">50 Quality</option>
+                    <option value="60">60 Quality</option>
+                    <option value="70">70 Quality</option>
+                    <option value="80">80 Quality</option>
+                    <option value="90">90 Quality</option>
+                    <option value="100">100 Quality</option>
+                  </select>
+                </div>
+              </>
+            )}
+          </div>
           <div className={styles.actions}>
             <button onClick={crop}>
-              <span>Render MP4</span>
+              <span>Render</span>
             </button>
             {outputUrl && (
               <a
                 href={outputUrl}
-                download="cropped.mp4"
+                download={`cropped.${
+                  mainStore.transform.outputFormat === 'webp' ? 'webp' : 'mp4'
+                }`}
                 className={clsx('button', styles.download)}
               >
                 <BsDownload />
@@ -154,7 +235,11 @@ export const Render: React.FC = observer(() => {
       )}
       {outputUrl && !ffmpeg.running && (
         <div>
-          <video src={outputUrl} controls />
+          {urlFormat === 'webp' ? (
+            <img src={outputUrl} alt="output" />
+          ) : (
+            <video src={outputUrl} controls />
+          )}
         </div>
       )}
       {!!ffmpeg.log && (

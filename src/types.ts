@@ -8,6 +8,10 @@ export interface VideoTransform {
   flipH?: boolean;
   flipV?: boolean;
   scale?: number;
+  outputFormat?: string;
+  webpFrameRate?: number;
+  // 质量
+  webpQuality?: number;
 }
 
 /**
