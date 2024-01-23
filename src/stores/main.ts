@@ -175,10 +175,13 @@ class MainStore {
 
   step = 0;
   video: HTMLVideoElement | undefined = undefined;
+  indexDBLoaded = false;
 
   constructor() {
     makeAutoObservable(this);
-    this.ffmpeg.load();
+    this.ffmpeg.load().then(() => {
+      this.indexDBLoaded = true;
+    });
 
     reaction(
       () => [this.step],

@@ -11,6 +11,11 @@ import { Render } from './steps/Render';
 
 export const App: React.FC = observer(() => {
   const step = mainStore.step;
+  const indexDBLoaded = mainStore.indexDBLoaded;
+
+  if (!indexDBLoaded) {
+    return <div className="app">ffmpeg installing...</div>;
+  }
 
   return (
     <div className="app">
