@@ -95,6 +95,7 @@ export const Render: React.FC = observer(() => {
       args.push('-q:v', webpQuality?.toString() ?? '80');
       args.push('-r', webpFrameRate?.toString() ?? '12');
       args.push('-loop', '0');
+      args.push('-compression_level', '6'); // 使用更高的压缩级别
     } else {
       args.push('-c:v', 'libx264');
       args.push('-preset', 'veryfast');
